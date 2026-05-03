@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login — EMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        body { margin: 0; }
+
+        .login-bg {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        /* Left panel — decorative */
+        .login-hero {
+            background: linear-gradient(145deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 3rem 3.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-hero::before {
+            content: '';
+            position: absolute;
+            top: -100px; right: -100px;
+            width: 420px; height: 420px;
+            border-radius: 50%;
+            background: rgba(99,102,241,0.2);
+        }
+
+        .login-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -80px; left: -80px;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            background: rgba(16,185,129,0.15);
+        }
+
+        .hero-content { position: relative; z-index: 1; }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 99px;
+            padding: 0.35rem 0.9rem;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.8);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        .hero-badge span { width: 6px; height: 6px; background: #10B981; border-radius: 50%; display: block; }
+
+        .hero-features { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 1rem; }
+
+        .hero-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.875rem;
+        }
+
+        .feature-dot {
+            width: 8px; height: 8px;
+            background: #10B981;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* Right panel — form */
+        .login-form-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: #F8FAFC;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            border: 1px solid #E2E8F0;
+        }
+
+        .input-icon-wrap { position: relative; }
+        .input-icon-wrap svg {
+            position: absolute;
+            left: 0.875rem; top: 50%;
+            transform: translateY(-50%);
+            color: #94A3B8;
+            width: 17px; height: 17px;
+            pointer-events: none;
+        }
+        .input-icon-wrap input { padding-left: 2.6rem; }
+
+        .pwd-toggle {
+            position: absolute;
+            right: 0.875rem; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            cursor: pointer; color: #94A3B8;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+        .pwd-toggle:hover { color: var(--brand); }
+
+        .demo-badge {
+            background: #EEF2FF;
+            border: 1px solid #C7D2FE;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.8rem;
+            color: #3730A3;
+        }
+
+        @media (max-width: 768px) {
+            .login-bg { grid-template-columns: 1fr; }
+            .login-hero { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-bg">
+
+    <!-- Left: Hero Panel -->
+    <div class="login-hero">
+        <div class="hero-content">
+            <div class="hero-badge"><span></span> Employee Management System</div>
+
+            <h1 style="font-size:2.5rem; font-weight:800; color:#fff; line-height:1.2; margin:0 0 1rem;">
+                Manage your<br>
+                <span style="color:#A5B4FC;">workforce</span><br>
+                with ease.
+            </h1>
+
+            <p style="color:rgba(255,255,255,0.6); font-size:0.9rem; line-height:1.7; max-width:360px;">
+                A complete platform for employee records, daily attendance tracking,
+                and automated salary computation — all in one place.
+            </p>
+
+            <div class="hero-features">
+                <div class="hero-feature"><div class="feature-dot"></div> Aadhaar-verified employee profiles</div>
+                <div class="hero-feature"><div class="feature-dot"></div> One-click daily attendance marking</div>
+                <div class="hero-feature"><div class="feature-dot"></div> Automated prorated salary calculation</div>
+                <div class="hero-feature"><div class="feature-dot"></div> Real-time dashboard analytics</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Form Panel -->
+    <div class="login-form-panel">
+        <div class="login-box">
+
+            <!-- Logo -->
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:2rem;">
+                <div style="width:40px;height:40px;background:#4F46E5;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">👥</div>
+                <div>
+                    <div style="font-weight:800;font-size:1rem;color:#1E293B;">EMS Portal</div>
+                    <div style="font-size:0.7rem;color:#64748B;">Admin Dashboard</div>
+                </div>
+            </div>
+
+            <h2 style="font-size:1.35rem;font-weight:700;color:#1E293B;margin:0 0 0.35rem;">Welcome back</h2>
+            <p style="font-size:0.85rem;color:#64748B;margin:0 0 1.75rem;">Sign in to access the dashboard</p>
+
+            <!-- Demo Credentials hint -->
+            <div class="demo-badge">
+                <svg style="width:15px;height:15px;flex-shrink:0;margin-top:1px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+                </svg>
+                <div>
+                    <strong>Demo credentials</strong><br>
+                    Username: <code>admin</code> &nbsp;|&nbsp; Password: <code>admin123</code>
+                </div>
+            </div>
+
+            <!-- Error alert -->
+            <div id="error-alert" style="display:none;background:#FEE2E2;border:1px solid #FECACA;border-radius:8px;padding:0.75rem 1rem;font-size:0.8rem;color:#991B1B;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;">
+                <svg style="width:15px;height:15px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>
+                </svg>
+                <span id="error-msg"></span>
+            </div>
+
+            <!-- Form -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <div class="input-icon-wrap">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <input type="text" id="username" class="form-input"
+                               placeholder="Enter username" value="admin" autocomplete="username" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-icon-wrap">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <input type="password" id="password" class="form-input"
+                               placeholder="Enter password" value="admin123" autocomplete="current-password" required />
+                        <button type="button" class="pwd-toggle" id="togglePwd">
+                            <svg id="eyeIcon" style="width:17px;height:17px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" id="loginBtn" class="btn btn-primary" style="width:100%;justify-content:center;padding:.75rem;font-size:.95rem;margin-top:.5rem;">
+                    Sign In
+                </button>
+            </form>
+
+            <p style="text-align:center;font-size:0.75rem;color:#94A3B8;margin-top:1.75rem;">
+                Protected by Spring Security + JWT Authentication
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<script src="api.js"></script>
+<script>
+    // Redirect if already logged in
+    if (Auth.isLoggedIn()) window.location.href = 'dashboard.html';
+
+    // Password toggle
+    document.getElementById('togglePwd').onclick = () => {
+        const input = document.getElementById('password');
+        const icon  = document.getElementById('eyeIcon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+        } else {
+            input.type = 'password';
+            icon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+        }
+    };
+
+    // Login form submit
+    document.getElementById('loginForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn      = document.getElementById('loginBtn');
+        const errAlert = document.getElementById('error-alert');
+        const errMsg   = document.getElementById('error-msg');
+
+        UI.setLoading(btn, true);
+        errAlert.style.display = 'none';
+
+        try {
+            const res = await API.login(
+                document.getElementById('username').value.trim(),
+                document.getElementById('password').value
+            );
+
+            if (res.success) {
+                Auth.setSession(res.data.token, res.data.username);
+                window.location.href = 'dashboard.html';
+            } else {
+                errAlert.style.display = 'flex';
+                errMsg.textContent = res.message || 'Invalid credentials';
+                UI.setLoading(btn, false);
+            }
+        } catch (err) {
+            errAlert.style.display = 'flex';
+            errMsg.textContent = 'Cannot connect to server. Is Spring Boot running?';
+            UI.setLoading(btn, false);
+        }
+    };
+</script>
+</body>
+</html>

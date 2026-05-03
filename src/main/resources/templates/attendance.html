@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance — EMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        .att-card {
+            background: #fff;
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .att-card.present  { border-color: #10B981; background: #F0FDF4; }
+        .att-card.absent   { border-color: #EF4444; background: #FEF2F2; }
+
+        .att-toggle {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .att-btn {
+            padding: 0.4rem 0.9rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1.5px solid var(--border);
+            background: #fff;
+            color: #64748B;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+
+        .att-btn.present-btn.active {
+            background: #10B981; border-color: #10B981; color: #fff;
+        }
+        .att-btn.absent-btn.active  {
+            background: #EF4444; border-color: #EF4444; color: #fff;
+        }
+        .att-btn:hover:not(.active) {
+            border-color: #94A3B8;
+            background: #F8FAFC;
+        }
+
+        .all-toggle-bar {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            padding: 0.75rem 1.25rem;
+            background: #F8FAFC;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-shell"></div>
+
+<div class="main-content">
+
+    <header class="topbar">
+        <div>
+            <h1 style="font-size:1.1rem;font-weight:700;margin:0;">Attendance</h1>
+            <p style="font-size:0.75rem;color:#64748B;margin:0;" id="att-subtitle">Daily attendance management</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <label style="font-size:0.8rem;color:#64748B;font-weight:500;">Date:</label>
+                <input type="date" id="dateInput" class="form-input" style="width:auto;" onchange="loadAttendance()" />
+            </div>
+            <button onclick="saveAll()" id="saveBtn" class="btn btn-primary">
+                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/>
+                </svg>
+                Save Attendance
+            </button>
+        </div>
+    </header>
+
+    <main class="page-content">
+
+        <!-- Summary Row -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#EEF2FF;">
+                    <svg style="width:22px;height:22px;color:#4F46E5;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                    </svg>
+                </div>
+                <div>
+                    <div style="font-size:1.5rem;font-weight:800;" id="s-total">0</div>
+                    <div style="font-size:0.75rem;color:#64748B;">Total Employees</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#D1FAE5;">
+                    <svg style="width:22px;height:22px;color:#059669;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <polyline points="20,6 9,17 4,12"/>
+                    </svg>
+                </div>
+                <div>
+                    <div style="font-size:1.5rem;font-weight:800;color:#059669;" id="s-present">0</div>
+                    <div style="font-size:0.75rem;color:#64748B;">Present</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#FEE2E2;">
+                    <svg style="width:22px;height:22px;color:#EF4444;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </div>
+                <div>
+                    <div style="font-size:1.5rem;font-weight:800;color:#EF4444;" id="s-absent">0</div>
+                    <div style="font-size:0.75rem;color:#64748B;">Absent</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="all-toggle-bar">
+            <span style="font-size:0.8rem;font-weight:600;color:#64748B;margin-right:0.5rem;">Mark All:</span>
+            <button onclick="markAll('PRESENT')" class="att-btn present-btn" style="background:#F0FDF4;border-color:#10B981;color:#065F46;">
+                ✓ All Present
+            </button>
+            <button onclick="markAll('ABSENT')" class="att-btn absent-btn" style="background:#FEF2F2;border-color:#EF4444;color:#991B1B;">
+                ✗ All Absent
+            </button>
+            <span style="flex:1;"></span>
+            <span style="font-size:0.75rem;color:#94A3B8;">Click individual buttons to toggle status</span>
+        </div>
+
+        <!-- Employee Attendance Cards -->
+        <div id="attendance-grid" style="display:flex;flex-direction:column;gap:0.6rem;">
+            <div style="text-align:center;padding:2rem;color:#64748B;">Loading employees...</div>
+        </div>
+
+    </main>
+</div>
+
+<script src="api.js"></script>
+<script src="sidebar.js"></script>
+<script>
+    Auth.requireAuth();
+    renderShell('attendance');
+
+    // Track current attendance state
+    const attendanceMap = {}; // employeeId -> 'PRESENT' | 'ABSENT' | null
+    let employees = [];
+
+    // Set default date to today
+    const dateInput = document.getElementById('dateInput');
+    dateInput.value = new Date().toISOString().split('T')[0];
+    document.getElementById('att-subtitle').textContent =
+        `Attendance for ${new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}`;
+
+    async function loadAttendance() {
+        const date = dateInput.value;
+        document.getElementById('att-subtitle').textContent =
+            `Attendance for ${new Date(date + 'T12:00:00').toLocaleDateString('en-IN', {
+                weekday:'long', day:'numeric', month:'long', year:'numeric' })}`;
+
+        document.getElementById('attendance-grid').innerHTML =
+            '<div style="text-align:center;padding:2rem;color:#64748B;">Loading...</div>';
+
+        try {
+            // Load all employees
+            const empRes = await API.getEmployees();
+            if (!empRes?.success) return;
+            employees = empRes.data;
+
+            // Load existing attendance for this date
+            const attRes = await API.getAttendanceByDate(date);
+            const existing = {};
+            if (attRes?.success) {
+                attRes.data.forEach(a => { existing[a.employeeId] = a.status; });
+            }
+
+            // Initialize map
+            employees.forEach(e => {
+                attendanceMap[e.id] = existing[e.id] || null;
+            });
+
+            updateSummary();
+            renderCards();
+
+        } catch (err) {
+            document.getElementById('attendance-grid').innerHTML =
+                '<div style="text-align:center;padding:2rem;color:#EF4444;">Failed to load data</div>';
+        }
+    }
+
+    function renderCards() {
+        const grid = document.getElementById('attendance-grid');
+        grid.innerHTML = employees.map(e => {
+            const status = attendanceMap[e.id];
+            return `
+        <div class="att-card ${status === 'PRESENT' ? 'present' : status === 'ABSENT' ? 'absent' : ''}"
+             id="card-${e.id}">
+            <div style="display:flex;align-items:center;gap:0.75rem;flex:1;min-width:0;">
+                ${e.photoPath
+                ? `<div class="avatar"><img src="${e.photoPath}" alt="${e.name}"/></div>`
+                : `<div class="avatar">${UI.initials(e.name)}</div>`}
+                <div style="min-width:0;">
+                    <div style="font-weight:600;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.name}</div>
+                    <div style="font-size:0.72rem;color:#64748B;">${e.designation || 'Employee'} · ${e.department || ''} · ID #${e.id}</div>
+                </div>
+            </div>
+            <div class="att-toggle">
+                <button class="att-btn present-btn ${status === 'PRESENT' ? 'active' : ''}"
+                        onclick="toggle(${e.id}, 'PRESENT')">
+                    ✓ Present
+                </button>
+                <button class="att-btn absent-btn ${status === 'ABSENT' ? 'active' : ''}"
+                        onclick="toggle(${e.id}, 'ABSENT')">
+                    ✗ Absent
+                </button>
+            </div>
+        </div>`;
+        }).join('');
+    }
+
+    function toggle(empId, status) {
+        // If clicking same status, deselect
+        attendanceMap[empId] = attendanceMap[empId] === status ? null : status;
+        updateCardUI(empId);
+        updateSummary();
+    }
+
+    function updateCardUI(empId) {
+        const status = attendanceMap[empId];
+        const card = document.getElementById(`card-${empId}`);
+        if (!card) return;
+        card.className = `att-card ${status === 'PRESENT' ? 'present' : status === 'ABSENT' ? 'absent' : ''}`;
+
+        const btns = card.querySelectorAll('.att-btn');
+        btns[0].className = `att-btn present-btn ${status === 'PRESENT' ? 'active' : ''}`;
+        btns[1].className = `att-btn absent-btn ${status === 'ABSENT' ? 'active' : ''}`;
+    }
+
+    function markAll(status) {
+        employees.forEach(e => { attendanceMap[e.id] = status; });
+        renderCards();
+        updateSummary();
+    }
+
+    function updateSummary() {
+        const present = Object.values(attendanceMap).filter(v => v === 'PRESENT').length;
+        const absent  = Object.values(attendanceMap).filter(v => v === 'ABSENT').length;
+        document.getElementById('s-total').textContent   = employees.length;
+        document.getElementById('s-present').textContent = present;
+        document.getElementById('s-absent').textContent  = absent;
+    }
+
+    async function saveAll() {
+        const date = dateInput.value;
+        const marked = Object.entries(attendanceMap).filter(([, v]) => v !== null);
+
+        if (marked.length === 0) {
+            UI.toast('No attendance marked yet. Toggle some employees first.', 'info');
+            return;
+        }
+
+        const btn = document.getElementById('saveBtn');
+        UI.setLoading(btn, true);
+
+        const payload = marked.map(([empId, status]) => ({
+            employeeId: parseInt(empId),
+            date,
+            status
+        }));
+
+        try {
+            const res = await API.markBulkAttendance(payload);
+            if (res?.success) {
+                UI.toast(`✓ Attendance saved for ${res.data.length} employees`, 'success');
+            } else {
+                UI.toast(res?.message || 'Save failed', 'error');
+            }
+        } catch (err) {
+            UI.toast('Failed to save attendance', 'error');
+        } finally {
+            UI.setLoading(btn, false);
+        }
+    }
+
+    loadAttendance();
+    registerAuthReload(loadAttendance);
+</script>
+</body>
+</html>

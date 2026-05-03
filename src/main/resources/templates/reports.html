@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reports — EMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        .salary-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.3rem 0.7rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            background: #F0FDF4;
+            color: #065F46;
+        }
+        .att-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px; height: 28px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .att-pill.p { background: #D1FAE5; color: #065F46; }
+        .att-pill.a { background: #FEE2E2; color: #991B1B; }
+
+        .progress-bar-wrap {
+            background: #E2E8F0;
+            border-radius: 99px;
+            height: 6px;
+            overflow: hidden;
+            min-width: 80px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, #10B981, #059669);
+            transition: width 0.4s;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-shell"></div>
+
+<div class="main-content">
+
+    <header class="topbar">
+        <div>
+            <h1 style="font-size:1.1rem;font-weight:700;margin:0;">Salary Reports</h1>
+            <p style="font-size:0.75rem;color:#64748B;margin:0;">Prorated salary based on attendance</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+            <select id="monthSelect" class="form-input" style="width:auto;" onchange="loadReports()">
+            </select>
+            <select id="yearSelect" class="form-input" style="width:auto;" onchange="loadReports()">
+            </select>
+            <button onclick="printReport()" class="btn btn-outline btn-sm">
+                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <polyline points="6,9 6,2 18,2 18,9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                    <rect x="6" y="14" width="12" height="8"/>
+                </svg>
+                Print
+            </button>
+        </div>
+    </header>
+
+    <main class="page-content" id="printArea">
+
+        <!-- Summary Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem;">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#EEF2FF;">💼</div>
+                <div>
+                    <div style="font-size:1.5rem;font-weight:800;" id="r-total-emp">—</div>
+                    <div style="font-size:0.75rem;color:#64748B;">Total Employees</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#D1FAE5;">💰</div>
+                <div>
+                    <div style="font-size:1.2rem;font-weight:800;color:#059669;" id="r-total-salary">—</div>
+                    <div style="font-size:0.75rem;color:#64748B;">Total Payroll</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#FEF3C7;">📅</div>
+                <div>
+                    <div style="font-size:1.5rem;font-weight:800;" id="r-working-days">—</div>
+                    <div style="font-size:0.75rem;color:#64748B;">Working Days</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#F3E8FF;">📊</div>
+                <div>
+                    <div style="font-size:1.2rem;font-weight:800;color:#7C3AED;" id="r-avg-attend">—</div>
+                    <div style="font-size:0.75rem;color:#64748B;">Avg. Attendance</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Info -->
+        <div style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:10px;padding:0.875rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.75rem;">
+            <svg style="width:18px;height:18px;color:#4F46E5;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+            </svg>
+            <span style="font-size:0.8rem;color:#3730A3;">
+        <strong>Salary Formula:</strong> &nbsp;
+        Calculated Salary = <code style="background:#C7D2FE;padding:0.15rem 0.4rem;border-radius:4px;">(Present Days ÷ Total Days) × Monthly Salary</code>
+      </span>
+        </div>
+
+        <!-- Report Table -->
+        <div class="card" style="padding:0;overflow:hidden;">
+            <div style="overflow-x:auto;">
+                <table class="data-table" id="reportTable">
+                    <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Department</th>
+                        <th style="text-align:center;">Present</th>
+                        <th style="text-align:center;">Absent</th>
+                        <th style="text-align:center;">Attendance %</th>
+                        <th>Monthly Salary</th>
+                        <th>Calculated Salary</th>
+                        <th>Deduction</th>
+                    </tr>
+                    </thead>
+                    <tbody id="report-tbody">
+                    <tr><td colspan="8" style="text-align:center;padding:2rem;color:#64748B;">Select month and year to view reports</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="api.js"></script>
+<script src="sidebar.js"></script>
+<script>
+    Auth.requireAuth();
+    renderShell('reports');
+
+    // ── Init Month/Year Selects ───────────────────────────────────
+    const now = new Date();
+    const monthSel = document.getElementById('monthSelect');
+    const yearSel  = document.getElementById('yearSelect');
+
+    MONTHS.forEach((m, i) => {
+        const opt = document.createElement('option');
+        opt.value = i + 1;
+        opt.textContent = m;
+        if (i + 1 === now.getMonth() + 1) opt.selected = true;
+        monthSel.appendChild(opt);
+    });
+
+    for (let y = now.getFullYear(); y >= now.getFullYear() - 2; y--) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        if (y === now.getFullYear()) opt.selected = true;
+        yearSel.appendChild(opt);
+    }
+
+    // ── Load Reports ──────────────────────────────────────────────
+    async function loadReports() {
+        const month = parseInt(monthSel.value);
+        const year  = parseInt(yearSel.value);
+        const tbody = document.getElementById('report-tbody');
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#64748B;">
+        <svg class="spin" style="width:20px;height:20px;display:inline-block;margin-right:0.5rem;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/>
+        </svg>Generating reports...
+    </td></tr>`;
+
+        try {
+            const res = await API.getAllSalaryReports(month, year);
+            if (!res?.success) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#EF4444;padding:2rem;">Failed to load reports</td></tr>`;
+                return;
+            }
+
+            const reports = res.data;
+
+            // Summary
+            document.getElementById('r-total-emp').textContent = reports.length;
+            const totalPayroll = reports.reduce((s, r) => s + r.calculatedSalary, 0);
+            document.getElementById('r-total-salary').textContent = UI.currency(totalPayroll);
+            document.getElementById('r-working-days').textContent = reports[0]?.totalWorkingDays || '—';
+
+            const avgAtt = reports.length > 0
+                ? Math.round(reports.reduce((s, r) => s + (r.presentDays / r.totalWorkingDays * 100), 0) / reports.length)
+                : 0;
+            document.getElementById('r-avg-attend').textContent = avgAtt + '%';
+
+            if (reports.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8">
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                    <p>No report data available for this period</p>
+                </div>
+            </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = reports.map(r => {
+                const pct         = r.totalWorkingDays > 0
+                    ? Math.round((r.presentDays / r.totalWorkingDays) * 100) : 0;
+                const deduction   = r.monthlySalary - r.calculatedSalary;
+                const pctColor    = pct >= 80 ? '#059669' : pct >= 60 ? '#D97706' : '#EF4444';
+
+                return `
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.6rem;">
+                        <div class="avatar">${UI.initials(r.employeeName)}</div>
+                        <div>
+                            <div style="font-weight:600;font-size:0.875rem;">${r.employeeName}</div>
+                            <div style="font-size:0.72rem;color:#64748B;">ID #${r.employeeId}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge ${UI.deptColor(r.department)}">${r.department || '—'}</span></td>
+                <td style="text-align:center;">
+                    <span class="att-pill p">${r.presentDays}</span>
+                </td>
+                <td style="text-align:center;">
+                    <span class="att-pill a">${r.absentDays}</span>
+                </td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <div class="progress-bar-wrap">
+                            <div class="progress-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${pctColor},${pctColor})"></div>
+                        </div>
+                        <span style="font-size:0.8rem;font-weight:700;color:${pctColor};min-width:36px;">${pct}%</span>
+                    </div>
+                </td>
+                <td style="color:#64748B;font-size:0.875rem;">${UI.currency(r.monthlySalary)}</td>
+                <td>
+                    <span class="salary-badge">${UI.currency(r.calculatedSalary)}</span>
+                </td>
+                <td style="font-size:0.875rem;color:${deduction > 0 ? '#EF4444' : '#10B981'};">
+                    ${deduction > 0 ? '−' + UI.currency(deduction) : '—'}
+                </td>
+            </tr>`;
+            }).join('');
+
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#EF4444;padding:2rem;">Error loading data</td></tr>`;
+        }
+    }
+
+    function printReport() {
+        window.print();
+    }
+
+    loadReports();
+    registerAuthReload(loadReports);
+</script>
+</body>
+</html>
