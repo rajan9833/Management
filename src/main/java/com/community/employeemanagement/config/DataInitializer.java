@@ -64,9 +64,19 @@ public class DataInitializer implements CommandLineRunner {
 
         if (!bcryptStored) {
             admin.setPassword(passwordEncoder.encode(defaultAdminPassword));
+            if (admin.getRole() == null || admin.getRole().isBlank()) {
+                admin.setRole("ROLE_ADMIN");
+            }
             userRepository.save(admin);
             log.warn("⚠️ Admin password was not BCrypt. Re-encoded default password for user: {}", defaultAdminUsername);
             return;
+        }
+
+        boolean roleMissing = admin.getRole() == null || admin.getRole().isBlank();
+        if (roleMissing) {
+            admin.setRole("ROLE_ADMIN");
+            userRepository.save(admin);
+            log.warn("⚠️ Admin role was missing. Restored ROLE_ADMIN for user: {}", defaultAdminUsername);
         }
 
         if (resetAdminOnStart && !passwordEncoder.matches(defaultAdminPassword, admin.getPassword())) {

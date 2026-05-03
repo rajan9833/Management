@@ -70,11 +70,17 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> userRepository.findByUsername(username)
-                .map(user -> org.springframework.security.core.userdetails.User.builder()
-                        .username(user.getUsername())
-                        .password(user.getPassword())
-                        .roles(user.getRole().replace("ROLE_", ""))
-                        .build())
+                .map(user -> {
+                    String role = user.getRole();
+                    if (role == null || role.isBlank()) {
+                        role = "ROLE_ADMIN";
+                    }
+                    return org.springframework.security.core.userdetails.User.builder()
+                            .username(user.getUsername())
+                            .password(user.getPassword())
+                            .roles(role.replace("ROLE_", ""))
+                            .build();
+                })
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 
