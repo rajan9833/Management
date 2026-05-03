@@ -62,6 +62,7 @@ public class AuthController {
             String storedPassword = user.getPassword();
             boolean isBcrypt = storedPassword != null && storedPassword.startsWith("$2");
             boolean authenticated;
+            boolean profileUpdated = false;
             if (isBcrypt) {
                 try {
                     authenticated = passwordEncoder.matches(request.getPassword(), storedPassword);
@@ -84,13 +85,23 @@ public class AuthController {
             // Migrate any legacy plain-text password to BCrypt after successful login.
             if (!isBcrypt) {
                 user.setPassword(passwordEncoder.encode(request.getPassword()));
+                profileUpdated = true;
                 log.warn("Upgraded legacy password hash for user: {}", request.getUsername());
             }
 
             if (user.getRole() == null || user.getRole().isBlank()) {
                 user.setRole("ROLE_ADMIN");
+                profileUpdated = true;
             }
-            userRepository.save(user);
+            if (profileUpdated) {
+                try {
+                    userRepository.save(user);
+                } catch (Exception saveEx) {
+                    // Do not block successful login if profile-upgrade persistence fails.
+                    log.error("Login succeeded but failed to persist user updates for {}: {}",
+                            request.getUsername(), saveEx.getMessage(), saveEx);
+                }
+            }
 
             // Generate JWT on success (username-only subject avoids role-format edge-case crashes).
             String token = jwtUtil.generateToken(user.getUsername());
