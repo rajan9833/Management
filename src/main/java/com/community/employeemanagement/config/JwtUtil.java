@@ -8,6 +8,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HexFormat;
@@ -87,7 +90,19 @@ public class JwtUtil {
     }
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(decodeSecret(secretKey));
+        return Keys.hmacShaKeyFor(normalizeKeyLength(decodeSecret(secretKey)));
+    }
+
+    private static byte[] normalizeKeyLength(byte[] keyBytes) {
+        if (keyBytes.length >= 32) {
+            return keyBytes;
+        }
+        try {
+            // HS256 needs a 256-bit key; derive one deterministically from short secrets.
+            return MessageDigest.getInstance("SHA-256").digest(keyBytes);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is unavailable on this JVM", e);
+        }
     }
 
     private static byte[] decodeSecret(String secret) {
@@ -98,8 +113,13 @@ public class JwtUtil {
         try {
             return Decoders.BASE64.decode(s);
         } catch (IllegalArgumentException ignored) {
-            // Fallback: allow hex-encoded secrets (common in configs)
-            return HexFormat.of().parseHex(s);
+            try {
+                // Fallback 1: allow hex-encoded secrets (common in configs)
+                return HexFormat.of().parseHex(s);
+            } catch (IllegalArgumentException ignoredHex) {
+                // Fallback 2: allow plain-text secrets from env vars (e.g., Render dashboard)
+                return s.getBytes(StandardCharsets.UTF_8);
+            }
         }
     }
 }
