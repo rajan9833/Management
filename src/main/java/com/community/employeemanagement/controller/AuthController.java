@@ -37,7 +37,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Map<String, String>>> ping() {
         return ResponseEntity.ok(ApiResponse.ok(
                 "Auth service reachable",
-                Map.of("status", "UP", "endpoint", "/api/auth/login", "method", "POST")
+                Map.of("status", "UP", "endpoint", "/auth/login", "method", "POST")
         ));
     }
 

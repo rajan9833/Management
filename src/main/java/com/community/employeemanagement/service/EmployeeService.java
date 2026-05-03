@@ -165,7 +165,7 @@ public class EmployeeService {
                 .phone(emp.getPhone())
                 .age(emp.getAge())
                 .salary(emp.getSalary())
-                .photoPath(emp.getPhotoPath() != null ? "/api/uploads/" + emp.getPhotoPath() : null)
+                .photoPath(emp.getPhotoPath() != null ? "/uploads/" + emp.getPhotoPath() : null)
                 .department(emp.getDepartment())
                 .designation(emp.getDesignation())
                 .build();

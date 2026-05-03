@@ -1,6 +1,6 @@
 /**
  * api.js — Shared API client for Employee Management System
- * Resolves URLs relative to the current page so `/api/` context-path and any port stay correct,
+ * Resolves URLs relative to the current page (same host/port/context) so deployments like Render stay correct,
  * skips Authorization when no JWT (avoid invalid "Bearer null"), and restores data after BFCache.
  */
 
