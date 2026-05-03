@@ -33,6 +33,15 @@ public class JwtUtil {
         return generateToken(new HashMap<>(), userDetails);
     }
 
+    public String generateToken(String username) {
+        return Jwts.builder()
+                .subject(username)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts.builder()
                 .claims(extraClaims)

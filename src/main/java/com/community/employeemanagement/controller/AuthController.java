@@ -9,7 +9,6 @@ import com.community.employeemanagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -93,17 +92,8 @@ public class AuthController {
             }
             userRepository.save(user);
 
-            // Generate JWT on success
-            String role = user.getRole().replace("ROLE_", "");
-            if (role.isBlank()) {
-                role = "ADMIN";
-            }
-            UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
-                    .username(user.getUsername())
-                    .password(user.getPassword())
-                    .roles(role)
-                    .build();
-            String token = jwtUtil.generateToken(userDetails);
+            // Generate JWT on success (username-only subject avoids role-format edge-case crashes).
+            String token = jwtUtil.generateToken(user.getUsername());
 
             log.info("Login successful for user: {}", request.getUsername());
 
