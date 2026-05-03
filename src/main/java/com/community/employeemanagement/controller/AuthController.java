@@ -4,15 +4,17 @@ import com.community.employeemanagement.config.JwtUtil;
 import com.community.employeemanagement.dto.ApiResponse;
 import com.community.employeemanagement.dto.LoginRequest;
 import com.community.employeemanagement.dto.LoginResponse;
+import com.community.employeemanagement.model.User;
+import com.community.employeemanagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Authentication Controller.
@@ -25,9 +27,9 @@ import java.util.Map;
 @Slf4j
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Browser-friendly health endpoint.
@@ -51,16 +53,43 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
         try {
-            // Authenticate username + password
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getUsername(),
-                            request.getPassword()
-                    )
-            );
+            User user = userRepository.findByUsername(request.getUsername()).orElse(null);
+            if (user == null) {
+                log.warn("Login failed: user not found: {}", request.getUsername());
+                return ResponseEntity.status(401)
+                        .body(ApiResponse.error("Invalid username or password"));
+            }
+
+            String storedPassword = user.getPassword();
+            boolean isBcrypt = storedPassword != null && storedPassword.startsWith("$2");
+            boolean authenticated = isBcrypt
+                    ? passwordEncoder.matches(request.getPassword(), storedPassword)
+                    : Objects.equals(request.getPassword(), storedPassword);
+
+            if (!authenticated) {
+                log.warn("Login failed: invalid password for user: {}", request.getUsername());
+                return ResponseEntity.status(401)
+                        .body(ApiResponse.error("Invalid username or password"));
+            }
+
+            // Migrate any legacy plain-text password to BCrypt after successful login.
+            if (!isBcrypt) {
+                user.setPassword(passwordEncoder.encode(request.getPassword()));
+                log.warn("Upgraded legacy password hash for user: {}", request.getUsername());
+            }
+
+            if (user.getRole() == null || user.getRole().isBlank()) {
+                user.setRole("ROLE_ADMIN");
+            }
+            userRepository.save(user);
 
             // Generate JWT on success
-            UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
+            String role = user.getRole().replace("ROLE_", "");
+            UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
+                    .username(user.getUsername())
+                    .password(user.getPassword())
+                    .roles(role)
+                    .build();
             String token = jwtUtil.generateToken(userDetails);
 
             log.info("Login successful for user: {}", request.getUsername());
@@ -70,12 +99,8 @@ public class AuthController {
                     new LoginResponse(token, request.getUsername(), "Welcome back!")
             ));
 
-        } catch (BadCredentialsException e) {
-            log.warn("Login failed for user: {}", request.getUsername());
-            return ResponseEntity.status(401)
-                    .body(ApiResponse.error("Invalid username or password"));
         } catch (Exception e) {
-            log.error("Login error: {}", e.getMessage());
+            log.error("Login error for user {}: {}", request.getUsername(), e.getMessage(), e);
             return ResponseEntity.status(500)
                     .body(ApiResponse.error("Authentication failed"));
         }
