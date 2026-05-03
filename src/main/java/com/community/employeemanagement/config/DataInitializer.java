@@ -6,9 +6,13 @@ import com.community.employeemanagement.repository.EmployeeRepository;
 import com.community.employeemanagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * Data Initializer.
@@ -24,6 +28,16 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
+    private static final Pattern BCRYPT_PATTERN = Pattern.compile("^\\$2[aby]\\$\\d{2}\\$.{53}$");
+
+    @Value("${app.seed.admin.username:admin}")
+    private String defaultAdminUsername;
+
+    @Value("${app.seed.admin.password:admin123}")
+    private String defaultAdminPassword;
+
+    @Value("${app.seed.admin.reset-on-start:false}")
+    private boolean resetAdminOnStart;
 
     @Override
     public void run(String... args) {
@@ -32,14 +46,33 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedAdminUser() {
-        if (!userRepository.existsByUsername("admin")) {
+        Optional<User> existingAdmin = userRepository.findByUsername(defaultAdminUsername);
+
+        if (existingAdmin.isEmpty()) {
             User admin = User.builder()
-                    .username("admin")
-                    .password(passwordEncoder.encode("admin123"))
+                    .username(defaultAdminUsername)
+                    .password(passwordEncoder.encode(defaultAdminPassword))
                     .role("ROLE_ADMIN")
                     .build();
             userRepository.save(admin);
-            log.info("✅ Default admin user created → username: admin | password: admin123");
+            log.info("✅ Default admin user created → username: {}", defaultAdminUsername);
+            return;
+        }
+
+        User admin = existingAdmin.get();
+        boolean bcryptStored = BCRYPT_PATTERN.matcher(admin.getPassword()).matches();
+
+        if (!bcryptStored) {
+            admin.setPassword(passwordEncoder.encode(defaultAdminPassword));
+            userRepository.save(admin);
+            log.warn("⚠️ Admin password was not BCrypt. Re-encoded default password for user: {}", defaultAdminUsername);
+            return;
+        }
+
+        if (resetAdminOnStart && !passwordEncoder.matches(defaultAdminPassword, admin.getPassword())) {
+            admin.setPassword(passwordEncoder.encode(defaultAdminPassword));
+            userRepository.save(admin);
+            log.warn("⚠️ Admin password reset on startup for user: {}", defaultAdminUsername);
         }
     }
 
